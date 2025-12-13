@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <icon rel="icon" href="assets/logo.png" />
+  <title>Undangan Pernikahan — Abdul Rahman Shalehudin</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+
+<body>
+  <div id="cover" class="cover">
+    <div class="cover-inner">
+      <div class="cover-title">The Wedding of</div>
+      <div class="cover-names responsive-names">
+        <span class="name">Dimitrios Philemon</span>
+        <span class="amp">&amp;</span>
+        <span class="name">Eirene Chrysanthe</span>
+      </div>
+      <div class="cover-date">Sabtu, 1 Januari 2026</div>
+
+      <div class="cover-invite">
+        Kepada Yth:<br>
+        Bapak/Ibu/Saudara/i<br>
+        <span id="guest-name">Tamu Undangan</span>
+      </div>
+
+      <button id="open-invite" class="btn-rsvp cover-btn">Buka Undangan</button>
+    </div>
+  </div>
+</body>
+
+<script src="script.js"></script>
+<script>
+  document.getElementById('open-invite').addEventListener('click', () => {
+    localStorage.setItem('playMusic', 'yes');
+    window.location.href = 'main.html';
+  });
+</script>
+
+
+</html>
