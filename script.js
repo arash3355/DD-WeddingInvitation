@@ -10,13 +10,25 @@ import {
 
 (function () {
   const params = new URLSearchParams(window.location.search);
-  const guestName = params.get("to");
+  let guestName = params.get("to");
 
-  const guestNameEl = document.getElementById("guest-name");
+  if (guestName) {
+    guestName = guestName.replace(/\+/g, " "); // ubah + jadi spasi
+    guestName = decodeURIComponent(guestName);
 
-  if (guestName && guestNameEl) {
-    guestNameEl.textContent = decodeURIComponent(guestName.replace(/\+/g, " "));
+    // TAMPILKAN DI COVER
+    const guestText = document.getElementById("guest-name-text");
+    if (guestText) {
+      guestText.textContent = guestName;
+    }
+
+    // ISI OTOMATIS FORM RSVP
+    const guestInput = document.getElementById("guest-name");
+    if (guestInput) {
+      guestInput.value = guestName;
+    }
   }
+
 
 
   document.addEventListener("DOMContentLoaded", () => {
