@@ -198,21 +198,27 @@
 
   renderGuests();
 
-  // === SCROLL ANIMATION ===
+  // === SCROLL ANIMATION (REPEATABLE) ===
   const animatedElements = document.querySelectorAll('.animate');
 
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('show');
-        observer.unobserve(entry.target);
-      }
-    });
-  }, {
-    threshold: 0.15
-  });
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('show');
+        } else {
+          // HAPUS agar animasi bisa diulang
+          entry.target.classList.remove('show');
+        }
+      });
+    },
+    {
+      threshold: 0.2
+    }
+  );
 
   animatedElements.forEach(el => observer.observe(el));
+
 
   // === COPY REKENING ===
   function copyText(text) {
@@ -233,3 +239,50 @@
 
 
 })();
+
+// === FIREBASE INITIALIZATION ===
+const firebaseConfig = {
+  apiKey: "API_KEY_KAMU",
+  authDomain: "xxxx.firebaseapp.com",
+  databaseURL: "https://xxxx.firebaseio.com",
+  projectId: "xxxx",
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+form.addEventListener('submit', e => {
+  e.preventDefault();
+
+  const data = {
+    name: guestName.value,
+    message: guestMessage.value,
+    time: Date.now()
+  };
+
+  db.ref('rsvp_messages').push(data);
+  form.reset();
+});
+
+const guestItems = document.getElementById('guest-items');
+
+db.ref('rsvp_messages')
+  .limitToLast(20)
+  .on('value', snapshot => {
+    guestItems.innerHTML = '';
+    const data = snapshot.val();
+
+    if (!data) return;
+
+    Object.values(data)
+      .sort((a, b) => b.time - a.time)
+      .forEach(item => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <strong>${item.name}</strong><br>
+          <em>${item.message}</em>
+        `;
+        guestItems.appendChild(li);
+      });
+  });
+
