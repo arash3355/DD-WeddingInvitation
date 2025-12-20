@@ -9,6 +9,16 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 (function () {
+  const params = new URLSearchParams(window.location.search);
+  const guestName = params.get("to");
+
+  const guestNameEl = document.getElementById("guest-name");
+
+  if (guestName && guestNameEl) {
+    guestNameEl.textContent = decodeURIComponent(guestName.replace(/\+/g, " "));
+  }
+
+
   document.addEventListener("DOMContentLoaded", () => {
 
     /* ===================== BACKGROUND MUSIC ===================== */
@@ -89,10 +99,15 @@ import {
     }
 
     function listenGuests() {
-      const q = query(rsvpRef, orderBy("createdAt", "desc"), limit(20));
+      const q = query(
+        rsvpRef,
+        orderBy("createdAt", "desc"),
+        limit(20)
+      );
 
       onSnapshot(q, snap => {
         guestItems.innerHTML = "";
+
         if (snap.empty) {
           guestItems.innerHTML = "<li>Belum ada pesan.</li>";
           return;
@@ -101,16 +116,28 @@ import {
         snap.forEach(doc => {
           const g = doc.data();
           const li = document.createElement("li");
+
+          li.className = "chat-bubble";
+
           li.innerHTML = `
-            <strong>${escapeHtml(g.name)}</strong>
-            — ${escapeHtml(g.attend)} (${g.count})<br>
-            <small>${escapeHtml(g.contact)}</small><br>
-            <em>${escapeHtml(g.message || "")}</em>
-          `;
+        <div class="chat-name">${escapeHtml(g.name)}</div>
+        <div class="chat-message">
+          ${escapeHtml(g.message || "—")}
+        </div>
+        <div class="chat-meta">
+          ${escapeHtml(g.attend)} • ${g.count} orang
+        </div>
+      `;
+
           guestItems.appendChild(li);
         });
+
+        // auto scroll ke pesan terbaru
+        guestItems.scrollTop = guestItems.scrollHeight;
       });
     }
+
+
 
     form?.addEventListener("submit", async e => {
       e.preventDefault();
