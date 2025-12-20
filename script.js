@@ -1,288 +1,160 @@
+import {
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  limit,
+  onSnapshot,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 (function () {
-  // === BACKGROUND MUSIC (SAFE VERSION) ===
-  document.addEventListener('DOMContentLoaded', function () {
+  document.addEventListener("DOMContentLoaded", () => {
 
-    const music = document.getElementById('bg-music');
-    const musicBtn = document.getElementById('musicBtn');
+    /* ===================== BACKGROUND MUSIC ===================== */
+    const music = document.getElementById("bg-music");
+    const musicBtn = document.getElementById("musicBtn");
 
-    if (!music || !musicBtn) return;
+    if (music && musicBtn) {
+      music.volume = 0.5;
 
-    music.volume = 0.5;
+      const muted = localStorage.getItem("musicMuted") === "yes";
+      music.muted = muted;
+      musicBtn.textContent = muted ? "🔇" : "🔊";
 
-    // restore mute state
-    const muted = localStorage.getItem('musicMuted') === 'yes';
-    music.muted = muted;
-    musicBtn.textContent = muted ? '🔇' : '🔊';
+      if (localStorage.getItem("playMusic") === "yes") {
+        setTimeout(() => music.play().catch(() => { }), 500);
+      }
 
-    // autoplay after open invitation
-    if (localStorage.getItem('playMusic') === 'yes') {
-      setTimeout(() => {
-        music.play().catch(() => { });
-      }, 500);
+      musicBtn.addEventListener("click", () => {
+        music.muted = !music.muted;
+        localStorage.setItem("musicMuted", music.muted ? "yes" : "no");
+        musicBtn.textContent = music.muted ? "🔇" : "🔊";
+      });
     }
 
-    musicBtn.addEventListener('click', function () {
-      music.muted = !music.muted;
-      localStorage.setItem('musicMuted', music.muted ? 'yes' : 'no');
-      musicBtn.textContent = music.muted ? '🔇' : '🔊';
-    });
+    /* ===================== EVENT DATE & COUNTDOWN ===================== */
+    const eventDateEl = document.getElementById("event-date-text");
+    const timerEl = document.getElementById("countdown-timer");
 
-  });
+    const eventDate = eventDateEl
+      ? new Date(eventDateEl.dataset.eventDate)
+      : null;
 
+    function updateCountdown() {
+      if (!eventDate || !timerEl) return;
 
+      const diff = eventDate - new Date();
+      if (diff <= 0) {
+        timerEl.textContent = "Hari ini 🎉";
+        return;
+      }
 
-  /* ===================== EVENT DATE (1 SUMBER) ===================== */
-  const eventDateEl = document.getElementById("event-date-text");
-  const eventDate = eventDateEl
-    ? new Date(eventDateEl.dataset.eventDate)
-    : null;
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff / 3600000) % 24);
+      const m = Math.floor((diff / 60000) % 60);
+      const s = Math.floor((diff / 1000) % 60);
 
-  /* ===================== COUNTDOWN ===================== */
-  const timerEl = document.getElementById("countdown-timer");
-
-  function updateCountdown() {
-    if (!eventDate || !timerEl) return;
-
-    const now = new Date();
-    const diff = eventDate - now;
-
-    if (diff <= 0) {
-      timerEl.textContent = "Hari ini 🎉";
-      return;
+      timerEl.textContent = `${d} hari ${h} jam ${m} menit ${s} detik`;
     }
 
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-    const minutes = Math.floor((diff / (1000 * 60)) % 60);
-    const seconds = Math.floor((diff / 1000) % 60);
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
 
-    timerEl.textContent =
-      `${days} hari ${hours} jam ${minutes} menit ${seconds} detik`;
-  }
+    /* ===================== RSVP TOGGLE ===================== */
+    const rsvpSection = document.getElementById("rsvp");
+    const openBtn = document.getElementById("open-rsvp");
+    const closeBtn = document.getElementById("close-rsvp");
 
-  setInterval(updateCountdown, 1000);
-  updateCountdown();
+    if (rsvpSection) rsvpSection.style.display = "none";
 
-  /* ===================== SAVE THE DATE ===================== */
-  const saveBtn = document.getElementById("saveDateBtn");
-
-  if (saveBtn && eventDate) {
-    saveBtn.addEventListener("click", () => {
-      const start = eventDate.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-      const endDate = new Date(eventDate.getTime() + 5 * 60 * 60 * 1000);
-      const end = endDate.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-
-      const url =
-        "https://www.google.com/calendar/render?action=TEMPLATE" +
-        "&text=The+Wedding+of+Dimitrios+%26+Eirene" +
-        "&dates=" + start + "/" + end +
-        "&details=Akad+dan+Resepsi+Pernikahan" +
-        "&location=Gedung+Terbengkalai";
-
-      window.open(url, "_blank");
-    });
-  }
-
-  /* ===================== NAMA TAMU DARI URL ===================== */
-  const params = new URLSearchParams(window.location.search);
-  const guestName = params.get("to");
-  const guestInput = document.getElementById("guest-name");
-
-  if (guestName && guestInput) {
-    guestInput.value = guestName;
-  }
-
-  /* ===================== RSVP TOGGLE ===================== */
-  const rsvpSection = document.getElementById("rsvp");
-  const openRsvpBtn = document.getElementById("open-rsvp");
-  const closeRsvpBtn = document.getElementById("close-rsvp");
-
-  if (rsvpSection) rsvpSection.style.display = "none";
-
-  if (openRsvpBtn && rsvpSection) {
-    openRsvpBtn.addEventListener("click", () => {
+    openBtn?.addEventListener("click", () => {
       rsvpSection.style.display = "block";
       rsvpSection.scrollIntoView({ behavior: "smooth" });
     });
-  }
 
-  if (closeRsvpBtn && rsvpSection) {
-    closeRsvpBtn.addEventListener("click", () => {
+    closeBtn?.addEventListener("click", () => {
       rsvpSection.style.display = "none";
     });
-  }
 
-  /* ===================== RSVP STORAGE ===================== */
-  const form = document.getElementById("rsvp-form");
-  const guestItems = document.getElementById("guest-items");
-  const clearBtn = document.getElementById("clear-guestlist");
-  const storageKey = "wedding_guestlist_v1";
+    /* ===================== FIRESTORE RSVP ===================== */
+    const form = document.getElementById("rsvp-form");
+    const guestItems = document.getElementById("guest-items");
+    const rsvpRef = collection(window.db, "rsvps");
 
-  function loadGuests() {
-    try {
-      return JSON.parse(localStorage.getItem(storageKey)) || [];
-    } catch {
-      return [];
-    }
-  }
-
-  function saveGuests(list) {
-    localStorage.setItem(storageKey, JSON.stringify(list));
-  }
-
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"]/g, c =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])
-    );
-  }
-
-  function renderGuests() {
-    if (!guestItems) return;
-
-    const list = loadGuests();
-    guestItems.innerHTML = "";
-
-    if (list.length === 0) {
-      guestItems.innerHTML = "<li>Belum ada konfirmasi.</li>";
-      return;
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"]/g, s =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[s])
+      );
     }
 
-    list.forEach(g => {
-      const li = document.createElement("li");
-      li.innerHTML = `
-        <strong>${escapeHtml(g.name)}</strong> — ${escapeHtml(g.attend)} (${g.count})<br>
-        <small>${escapeHtml(g.contact)}</small><br>
-        <em>${escapeHtml(g.message || "")}</em>
-      `;
-      guestItems.appendChild(li);
-    });
-  }
+    function listenGuests() {
+      const q = query(rsvpRef, orderBy("createdAt", "desc"), limit(20));
 
-  if (form) {
-    form.addEventListener("submit", e => {
+      onSnapshot(q, snap => {
+        guestItems.innerHTML = "";
+        if (snap.empty) {
+          guestItems.innerHTML = "<li>Belum ada pesan.</li>";
+          return;
+        }
+
+        snap.forEach(doc => {
+          const g = doc.data();
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <strong>${escapeHtml(g.name)}</strong>
+            — ${escapeHtml(g.attend)} (${g.count})<br>
+            <small>${escapeHtml(g.contact)}</small><br>
+            <em>${escapeHtml(g.message || "")}</em>
+          `;
+          guestItems.appendChild(li);
+        });
+      });
+    }
+
+    form?.addEventListener("submit", async e => {
       e.preventDefault();
 
       const data = {
         name: form["guest-name"].value.trim(),
         contact: form["guest-contact"].value.trim(),
         attend: form["guest-attend"].value,
-        count: form["guest-count"].value,
+        count: Number(form["guest-count"].value),
         message: form["guest-message"].value.trim(),
-        time: new Date().toISOString()
+        createdAt: serverTimestamp()
       };
 
       if (!data.name || !data.contact) {
-        alert("Mohon isi nama dan kontak.");
+        alert("Nama & kontak wajib diisi");
         return;
       }
 
-      const list = loadGuests();
-      list.push(data);
-      saveGuests(list);
-      renderGuests();
-
-      alert("Terima kasih! Konfirmasi tersimpan.");
-      form.reset();
-      rsvpSection.style.display = "none";
-    });
-  }
-
-  if (clearBtn) {
-    clearBtn.addEventListener("click", () => {
-      if (confirm("Hapus semua data RSVP?")) {
-        localStorage.removeItem(storageKey);
-        renderGuests();
+      try {
+        await addDoc(rsvpRef, data);
+        alert("Terima kasih! 🤍");
+        form.reset();
+        rsvpSection.style.display = "none";
+      } catch (err) {
+        console.error(err);
+        alert("Gagal mengirim RSVP");
       }
     });
-  }
 
-  renderGuests();
+    listenGuests();
 
-  // === SCROLL ANIMATION (REPEATABLE) ===
-  const animatedElements = document.querySelectorAll('.animate');
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('show');
-        } else {
-          // HAPUS agar animasi bisa diulang
-          entry.target.classList.remove('show');
-        }
+    /* ===================== SCROLL ANIMATION ===================== */
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        e.target.classList.toggle("show", e.isIntersecting);
       });
-    },
-    {
-      threshold: 0.2
-    }
-  );
+    }, { threshold: 0.2 });
 
-  animatedElements.forEach(el => observer.observe(el));
+    document.querySelectorAll(".animate").forEach(el => observer.observe(el));
 
+    /* ===================== FLOATING BUTTON ===================== */
+    const fab = document.querySelector(".fab-container");
+    const fabMain = document.querySelector(".fab-main");
+    fabMain?.addEventListener("click", () => fab.classList.toggle("active"));
 
-  // === COPY REKENING ===
-  function copyText(text) {
-    navigator.clipboard.writeText(text).then(() => {
-      alert("Nomor rekening berhasil disalin");
-    });
-  }
-
-
-  // === FLOATING BUTTON TOGGLE ===
-  const fab = document.querySelector('.fab-container');
-  const fabMain = document.querySelector('.fab-main');
-
-  fabMain.addEventListener('click', () => {
-    fab.classList.toggle('active');
   });
-
-
-
 })();
-
-// === FIREBASE INITIALIZATION ===
-const firebaseConfig = {
-  apiKey: "API_KEY_KAMU",
-  authDomain: "xxxx.firebaseapp.com",
-  databaseURL: "https://xxxx.firebaseio.com",
-  projectId: "xxxx",
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-form.addEventListener('submit', e => {
-  e.preventDefault();
-
-  const data = {
-    name: guestName.value,
-    message: guestMessage.value,
-    time: Date.now()
-  };
-
-  db.ref('rsvp_messages').push(data);
-  form.reset();
-});
-
-const guestItems = document.getElementById('guest-items');
-
-db.ref('rsvp_messages')
-  .limitToLast(20)
-  .on('value', snapshot => {
-    guestItems.innerHTML = '';
-    const data = snapshot.val();
-
-    if (!data) return;
-
-    Object.values(data)
-      .sort((a, b) => b.time - a.time)
-      .forEach(item => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-          <strong>${item.name}</strong><br>
-          <em>${item.message}</em>
-        `;
-        guestItems.appendChild(li);
-      });
-  });
-
