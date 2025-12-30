@@ -54,6 +54,27 @@ import {
       });
     }
 
+    /* ===================== SAVE THE DATE ===================== */
+    document.getElementById("saveDateBtn")?.addEventListener("click", () => {
+      const dateEl = document.getElementById("event-date-text");
+      const location = document.getElementById("map-address")?.innerText || "";
+      const couple = document.querySelector(".couple")?.innerText || "";
+
+      const start = new Date(dateEl.dataset.eventDate);
+      const end = new Date(start.getTime() + 3 * 60 * 60 * 1000);
+
+      const fmt = d =>
+        d.toISOString().replace(/[-:]/g, "").split(".")[0];
+
+      const url =
+        `https://www.google.com/calendar/render?action=TEMPLATE` +
+        `&text=${encodeURIComponent("Pernikahan " + couple)}` +
+        `&dates=${fmt(start)}/${fmt(end)}` +
+        `&location=${encodeURIComponent(location)}`;
+
+      window.open(url, "_blank");
+    });
+
     /* ===================== EVENT DATE & COUNTDOWN ===================== */
     const eventDateEl = document.getElementById("event-date-text");
     const timerEl = document.getElementById("countdown-timer");
